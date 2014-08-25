@@ -56,29 +56,43 @@
            (om/build +and-button state {:opts {:k :zoom}})
            (for [k [:row :col]]
              (om/build +and-button state {:opts {:k k}}))
-           (om/build map-component [(state :map) 
-                                    [(state :row) (state :col)] 
-                                    {:cell-height (state :zoom) 
-                                     :cell-width (state :zoom)}])])))
+           (om/build map-component 
+                     [(assoc-in (state :map) 
+                                (map/wrap [(state :row) (state :col)] 
+                                          (state :map)) 
+                                :person)
+                      [(state :row) (state :col)] 
+                      {:cell-height (state :zoom) 
+                       :cell-width (state :zoom)}])])))
 
+; TODO: Rewrite with a macro to use js for loops
 (defn draw-grid [ctx [grid & [old-grid]] [cell-width cell-height]
                  & {:keys [redraw?]}]
-  (doseq [[row-num row] (map list (range) grid)]
-    (doseq [[col-num cell] (map list (range (count row)) row)]
+  (doseq [row-num (range (count (first grid)))]
+    (doseq [col-num (range (count grid))]
       ; Check last draw cell if available and not forcing redraw
       (when (or redraw?
-                (not (= (get-in old-grid [row-num col-num]) cell)))
-        (aset ctx "fillStyle" (trans-color cell))
-        (.fillText ctx  
-                   (trans cell)
-                   (* col-num cell-width) 
-                   (* row-num cell-height))
+                (not (= (get-in old-grid [row-num col-num]) 
+                        (get-in grid [row-num col-num]))))
+        (aset ctx "fillStyle" (trans-color (get-in grid [row-num col-num])))
+        ;(.fillText ctx  
+                   ;(trans cell)
+                   ;(* col-num cell-width) 
+                   ;(* row-num cell-height))
         (.fillRect ctx  
                    (* col-num cell-width) 
                    (* row-num cell-height)
                    cell-width 
                    cell-height)
         (aset ctx "fillStyle" "white")))))
+
+; Override with js implementation
+(defn draw-grid [ctx [grid & [old-grid]] [cell-width cell-height]
+                 & {:keys [redraw?]}]
+  (js/Graphics.drawGrid ctx 
+                        (clj->js grid) 
+                        cell-width cell-height 
+                        (clj->js old-grid)))
 
 (defn clear [canvas]
   (.clearRect (.getContext canvas "2d")
@@ -92,7 +106,7 @@
   (reify
     om/IDidMount
     (did-mount [this]
-      (draw-grid (.getContext (om/get-node owner) "2d") [grid] [cell-width cell-height]))
+        (draw-grid (.getContext (om/get-node owner) "2d") [grid] [cell-width cell-height]))
     om/IRender
     (render [this]
       (html [:canvas {:width (* (count (first grid)) cell-width)
@@ -190,9 +204,8 @@
   (let [{:keys [chunk-size chunk-count
                 viewport-height viewport-width] :as props}
         ; Set defaults not with destructuring becase :as and :or don't work well together.
-        (merge {:chunk-size 60 :chunk-count 5
+        (merge {:chunk-size 60 :chunk-count 3
                 :viewport-width 200 :viewport-height 200} props)
-        grid (assoc-in grid (map/wrap [row col] grid) :person)
         chunk-width (* chunk-size cell-width)
         chunk-height (* chunk-size cell-height)]
     (reify
@@ -220,8 +233,8 @@
            ;
            ; Row and Col shifts are not included because they will be used later to center.
            ; This is to set up the correct frame of refernce.
-           :base-shift {:top (* chunk-size chunks-per) 
-                        :left (* chunk-size chunks-per)} }))
+           :base-shift {:top (- row) 
+                        :left (- col)} }))
       ; Adjust scroll position after mount to center 
       om/IWillReceiveProps
       (will-receive-props [this [_ [next-row next-col]]]
@@ -241,19 +254,28 @@
                (add-side grid :bottom chunk-size)))))
       om/IDidMount
       (did-mount [this]
-        (let [base-shift (:base-shift (om/get-state owner))]
+        (let [base-shift (:base-shift (om/get-state owner))
+              canvas-height (* chunk-count chunk-size cell-height)
+              canvas-width (* chunk-count chunk-size cell-width)]
           (doto (om/get-node owner) 
-            (aset "scrollTop" (* cell-height (+ row (:top base-shift)))
-) 
-            (aset "scrollLeft" (* cell-width (+ col (:left base-shift)))
-))))
+            (aset "scrollTop" (+ (* cell-height (+ row (:top base-shift)))
+                                 (/ (- canvas-height viewport-height) 2)))
+ 
+            (aset "scrollLeft" (+ (* cell-width (+ col (:left base-shift)))
+                                  (/ (- canvas-width viewport-width) 2)
+)))))
       om/IDidUpdate
       (did-update [this _ _]
-        (let [base-shift (:base-shift (om/get-state owner))]
+        (let [base-shift (:base-shift (om/get-state owner))
+              canvas-height (* chunk-count chunk-size cell-height)
+              canvas-width (* chunk-count chunk-size cell-width)]
           (doto (om/get-node owner) 
-            (aset "scrollTop" (* cell-height (+ row (:top base-shift)))
-)
-            (aset "scrollLeft" (* cell-width (+ col (:left base-shift)))))))
+            (aset "scrollTop" (+ (* cell-height (+ row (:top base-shift)))
+                                 (/ (- canvas-height viewport-height) 2)))
+ 
+            (aset "scrollLeft" (+ (* cell-width (+ col (:left base-shift)))
+                                  (/ (- canvas-width viewport-width) 2)
+)))))
       om/IRenderState
       (render-state [this {:keys [base-shift map-width map-height chunks]}]
         (html [:div {:id "map" 

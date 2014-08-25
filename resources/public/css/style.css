@@ -5,6 +5,11 @@
   top: 100px;
   left: 100px;
 }
+
+#map::-webkit-scrollbar { 
+  display: none;
+}
+
 .row {
   position: absolute;
 }
