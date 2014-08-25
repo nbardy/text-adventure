@@ -1,0 +1,4 @@
+Previous try
+Change world map implementation to split and prerender chunks of the map rather than ask for 
+
+
