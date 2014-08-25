@@ -102,6 +102,12 @@
   (let [size (/ size 2)]
     (slice grid (+and- row size) (+and- col size))))
 
+(defn slice [grid [from-row to-row] [from-col to-col]]
+  (vectorify
+    (for [row (range from-row to-row)]
+      (for [col (range from-col to-col)]
+        (get-in grid (map/wrap [row col] grid))))))
+
 (defn grid-component [[grid [cell-width cell-height :as zoom] [left top] :as props] owner]
   (reify
     om/IDidMount
@@ -120,17 +126,18 @@
     om/IDidUpdate
     (did-update [this [prev-grid prev-zoom _] prev-state]
       (let [same-zoom? (= prev-zoom zoom)]
-        (when-not (and (identical? prev-grid grid) same-zoom?)
+        (when-not (and (= prev-grid grid) same-zoom?)
           (draw-grid (.getContext (om/get-node owner) "2d")
                      [grid prev-grid] [cell-width cell-height]
                      :redraw? (not same-zoom?)))))))
 
 (defn new-chunk [grid [row col] size]
-  {:grid (slice-around grid [row col] size)
+  {:size size
    :center [row col]})
 
 (defn chunk-id [chunk]
   (str "cell-" (join "," (chunk :center))))
+
 
 (defn add-row [{:keys [chunks] :as state} grid direction chunk-size]
   (let [+or- (if (= direction :top) - +)
@@ -204,7 +211,7 @@
   (let [{:keys [chunk-size chunk-count
                 viewport-height viewport-width] :as props}
         ; Set defaults not with destructuring becase :as and :or don't work well together.
-        (merge {:chunk-size 60 :chunk-count 3
+        (merge {:chunk-size 7 :chunk-count 9
                 :viewport-width 200 :viewport-height 200} props)
         chunk-width (* chunk-size cell-width)
         chunk-height (* chunk-size cell-height)]
@@ -285,7 +292,9 @@
                (flatten (for [[row-of-chunks row-num] (map list chunks (range))]
                  (for [[chunk col-num] (map list row-of-chunks (range))]
                     (om/build grid-component 
-                              [(chunk :grid) 
+                              [(slice-around grid 
+                                             (chunk :center) 
+                                             (chunk :size))
                                [cell-width cell-height] 
                                [(* col-num chunk-width)
                                 (* row-num chunk-height)] 

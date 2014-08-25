@@ -17,8 +17,7 @@ Graphics.drawGrid = function(ctx, grid, cell_width, cell_height, old_grid) {
     for (var col = 0; col < col_count; col++) {
       var val = grid[row][col]
       // Get color
-      col
-      if(!old_grid || (val != old_grid[row][col])) {
+      if(!old_grid || (val !== old_grid[row][col])) {
         ctx.fillStyle = text_ad.graphics.trans_color(val);
         ctx.fillRect(col * cell_width,
             row * cell_height,
