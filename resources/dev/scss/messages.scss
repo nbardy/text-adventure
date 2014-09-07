@@ -1,0 +1,19 @@
+$message-height: 20px;
+.message-list {
+  margin: 0;
+  list-style: none;
+}
+
+.message {
+  overflow: hidden;
+  display: flex;
+  .message-content { align-self: flex-end;}
+}
+.slide-down-enter {
+  max-height: 0;
+  transition: max-height .5s ease-in;
+}
+
+.slide-down-enter.slide-down-enter-active {
+  max-height: 4 * $message-height;
+}

@@ -2,3 +2,6 @@ Previous try
 Change world map implementation to split and prerender chunks of the map rather than ask for 
 
 
+Make Multiplayer
+----------------
+Make the world available to 2-4 people or so through firebase.

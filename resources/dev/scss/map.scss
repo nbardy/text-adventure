@@ -1,0 +1,21 @@
+/* some style */
+#map { 
+  font-family: 'Arial';
+  position: relative;
+}
+
+#map::-webkit-scrollbar { 
+  display: none;
+}
+
+.row {
+  position: absolute;
+}
+
+.cell { 
+  top: 0px;
+  font-size: 8px;
+  position: absolute;
+  -webkit-transform: translate3d(0,0,0);
+}
+

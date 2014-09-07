@@ -1,4 +1,4 @@
-(ns text-ad.graphics
+(ns text-ad.render.map.core
   (:require [om.core :as om :include-macros true]
             [text-ad.map :refer [vectorify] :as map]
             [text-ad.util :refer [in-between?]]
@@ -21,9 +21,18 @@
          (-> ch (.charCodeAt 0) (* 75684) (mod 255)) ","
          (-> ch (.charCodeAt 0) (* 94231) (mod 255)) ","
          (-> ch (.charCodeAt 0) (* 31349) (mod 255)) ")")))
-                  
 
-(defn px [x] (str x "px"))
+(defn pre-render-map [map-data & {:keys [chunk-size] :as options}]
+  (let [cache (atom [])
+        row-count (count map-data)
+        col-count (count (first map-data))
+        [row-segments col-segments]
+        (for [v [row-count col-count]] (partition-all chunk-size (range v)))]
+    (for [row-segment row-segments]
+      (for [col-segment col-segments]
+        (for [row row-segment
+              col col-segment]
+          [row col])))))
 
 
 (defn slice [grid [from-row to-row] [from-col to-col]]
@@ -50,12 +59,9 @@
                        (om/transact! state k dec))} "-"]])))
 
 
-(defn game [state owner]
+(defn map-view [state owner]
   (om/component
-    (html [:div "Hello world!"
-           (om/build +and-button state {:opts {:k :zoom}})
-           (for [k [:row :col]]
-             (om/build +and-button state {:opts {:k k}}))
+    (html [:div
            (om/build map-component 
                      [(assoc-in (state :map) 
                                 (map/wrap [(state :row) (state :col)] 
@@ -63,7 +69,10 @@
                                 :person)
                       [(state :row) (state :col)] 
                       {:cell-height (state :zoom) 
-                       :cell-width (state :zoom)}])])))
+                       :cell-width (state :zoom)}])
+           (om/build +and-button state {:opts {:k :zoom}})
+           (for [k [:row :col]]
+             (om/build +and-button state {:opts {:k k}})) ])))
 
 ; TODO: Rewrite with a macro to use js for loops
 (defn draw-grid [ctx [grid & [old-grid]] [cell-width cell-height]
@@ -92,7 +101,8 @@
   (js/Graphics.drawGrid ctx 
                         (clj->js grid) 
                         cell-width cell-height 
-                        (clj->js old-grid)))
+                        (clj->js old-grid)
+                        redraw?))
 
 (defn clear [canvas]
   (.clearRect (.getContext canvas "2d")
@@ -208,10 +218,11 @@
                       & [{:keys [cell-width cell-height]
                           :or [cell-width 10 cell-height 10]}]]
                      owner props]
+  (print (pre-render-map (slice grid [0 4] [0 4]) :chunk-size 3))
   (let [{:keys [chunk-size chunk-count
                 viewport-height viewport-width] :as props}
         ; Set defaults not with destructuring becase :as and :or don't work well together.
-        (merge {:chunk-size 7 :chunk-count 9
+        (merge {:chunk-size 9 :chunk-count 5
                 :viewport-width 200 :viewport-height 200} props)
         chunk-width (* chunk-size cell-width)
         chunk-height (* chunk-size cell-height)]
@@ -300,3 +311,5 @@
                                 (* row-num chunk-height)] 
                                [chunk-width chunk-height]]
                               {:opts props :react-key (:center chunk)}))))])))))
+
+              

@@ -1,0 +1,38 @@
+$info-page-width: 200px;
+$action-page-width: 200px;
+$message-page-height: 100px;
+$message-page-width: 400px;
+$padding: 20px;
+
+#info-page, #action-page, #map-page, #message-page {
+  margin: none;
+  position: absolute;
+}
+
+#info-page, #action-page, #map-page {
+  top: $padding;
+}
+
+#message-page {
+  left: $info-page-width + 2 * $padding;
+  bottom: $padding;
+  height: $message-page-height;
+  width: $message-page-width;
+  border: 1px solid black;
+  overflow-y: scroll;
+}
+
+#info-page {
+  left: $padding;
+  width: $info-page-width;
+}
+#action-page {
+  left: $info-page-width + 2 * $padding;
+  width: $action-page-width;
+}
+
+#map-page {
+  left: $info-page-width + $action-page-width + 3 * $padding;
+  width: $action-page-width;
+}
+

@@ -1,21 +1,112 @@
-/* some style */
-#map { 
-  font-family: 'Arial';
-  position: absolute;
-  top: 100px;
-  left: 100px;
-}
+#info-page, #action-page, #map-page, #message-page {
+  margin: none;
+  position: absolute; }
 
-#map::-webkit-scrollbar { 
-  display: none;
-}
+#info-page, #action-page, #map-page {
+  top: 20px; }
+
+#message-page {
+  left: 240px;
+  bottom: 20px;
+  height: 100px;
+  width: 400px;
+  border: 1px solid black;
+  overflow-y: scroll; }
+
+#info-page {
+  left: 20px;
+  width: 200px; }
+
+#action-page {
+  left: 240px;
+  width: 200px; }
+
+#map-page {
+  left: 460px;
+  width: 200px; }
+
+/* some style */
+#map {
+  font-family: 'Arial';
+  position: relative; }
+
+#map::-webkit-scrollbar {
+  display: none; }
 
 .row {
-  position: absolute;
-}
-.cell { 
+  position: absolute; }
+
+.cell {
   top: 0px;
   font-size: 8px;
   position: absolute;
-  -webkit-transform: translate3d(0,0,0);
-}
+  -webkit-transform: translate3d(0, 0, 0); }
+
+#stats {
+  position: absolute;
+  top: 20px; }
+
+#title {
+  margin-bottom: 10px;
+  border: 1px solid black; }
+
+#inventory {
+  border: 1px solid black;
+  height: 300px; }
+
+#actions .action-button {
+  text-align: center;
+  color: black;
+  background-color: teal;
+  font-weight: bold;
+  width: 100%;
+  margin-bottom: 0.5em;
+  padding: 5px; }
+
+.polymer-button {
+  position: relative;
+  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26), 0 2px 10px 0 rgba(0, 0, 0, 0.16);
+  border-radius: 3px;
+  text-transform: uppercase;
+  cursor: pointer;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+  text-align: center;
+  background-color: #cecece;
+  font-family: Helvetica;
+  overflow: hidden;
+  padding: 5px; }
+  .polymer-button span {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    color: white;
+    z-index: 6; }
+  .polymer-button .ripple {
+    z-index: 5;
+    position: absolute;
+    background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.25) 0%, transparent 100%);
+    transition: background, height, width, margin;
+    transition-duration: 0.1s;
+    transition-timing-function: ease-out;
+    border-radius: 9900px; }
+
+.message-list {
+  margin: 0;
+  list-style: none; }
+
+.message {
+  overflow: hidden;
+  display: flex; }
+  .message .message-content {
+    align-self: flex-end; }
+
+.slide-down-enter {
+  max-height: 0;
+  transition: max-height .5s ease-in; }
+
+.slide-down-enter.slide-down-enter-active {
+  max-height: 80px; }
+
+/*# sourceMappingURL=style.css.map */

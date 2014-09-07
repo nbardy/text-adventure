@@ -1,12 +1,16 @@
 (ns text-ad.core
+  (:require-macros [text-ad.macros :refer [do-in]])
   (:require [text-ad.util :refer [create-element! current-time$]]
-            [text-ad.graphics :as graphics]
+            [text-ad.render.core :as render]
             [text-ad.map :as map]
             [text-ad.game :refer [advance]]
+            [text-ad.actions :as actions]
+            [text-ad.messages :as messages]
             [om.core :as om :include-macros true]
             [figwheel.client :as fw]))
 
 (enable-console-print!)
+
 
 (def rows 40)
 (def cols 40)
@@ -15,8 +19,22 @@
 (map/set-seed! seed)
 (defonce init-state (atom {:map (map/create) 
                            :row 11 :col 11
-                           :zoom 5}))
-(om/root graphics/game init-state {:target js/document.body})
+                           :messages []
+                           :zoom 20}))
+
+(do-in 2000
+  (swap! init-state update-in [:messages] conj "Confused, you can't seem to remember much of anything."))
+
+
+(do-in 5000
+  (swap! init-state update-in [:messages] conj "What happened?"))
+
+(do-in 7000
+  (swap! init-state update-in [:messages] conj "Laying on your back, vision is foggy, head throbbing...")
+  (swap! init-state assoc :has-begun true))
+
+
+(om/root render/app-view init-state {:target js/document.body})
 
 (aset js/document "onkeydown" 
       (fn [e] (case js/window.event.keyCode
@@ -28,34 +46,7 @@
 (defn with-timestamp [state]
   (assoc state [:timestamp] (current-time$)))
 
-; TODO: Remove. This is for testing
-;(defn advance [state]
-  ;(map/set-seed! seed)
-  ;{:map (map/create)})
-;
-;(defn animate! [state canvas]
-  ;(js/requestAnimationFrame (fn []
-      ;(animate! (advance (with-timestamp state)) canvas)))
-  ;(graphics/render! canvas state))
-;
-;(def init-state {:map (map/create )})
-;
-;(defn start-loop! [canvas]
-  ;(animate! (with-timestamp init-state) canvas))
-
-;(defn start! []
-  ;(start-loop! (let [ele (create-element! "div" {:id "map"})]
-                 ;(set! (.-width ele) js/innerWidth)
-                 ;(set! (.-height ele) js/innerHeight)
-                 ;(.appendChild js/document.body ele)
-                 ;ele)))
-
-;(when-not @started
-  ;(print "Started...")
-  ;(reset! started true)
-  ;(start!))
-
 (fw/watch-and-reload
  :jsload-callback (fn [] 
-                    (reset! init-state @init-state)
+                    (om/root render/app-view init-state {:target js/document.body})
                     (print "refresh")))
