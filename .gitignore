@@ -3,3 +3,4 @@ resources/public/css/style.css.map
 *.swp
 .sass-cache
 .lein-repl-history
+.nrepl-port
