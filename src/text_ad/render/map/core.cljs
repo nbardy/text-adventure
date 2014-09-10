@@ -1,7 +1,7 @@
 (ns text-ad.render.map.core
   (:require [om.core :as om :include-macros true]
             [text-ad.map :refer [vectorify] :as map]
-            [text-ad.util :refer [in-between?]]
+            [text-ad.util :refer [create-element! in-between?]]
             [clojure.string :refer [join]]
             [sablono.core :refer-macros [html]]))
 
@@ -75,7 +75,7 @@
              (om/build +and-button state {:opts {:k k}})) ])))
 
 ; TODO: Rewrite with a macro to use js for loops
-(defn draw-grid [ctx [grid & [old-grid]] [cell-width cell-height]
+(defn draw-grid! [ctx [grid & [old-grid]] [cell-width cell-height]
                  & {:keys [redraw?]}]
   (doseq [row-num (range (count (first grid)))]
     (doseq [col-num (range (count grid))]
@@ -96,7 +96,7 @@
         (aset ctx "fillStyle" "white")))))
 
 ; Override with js implementation
-(defn draw-grid [ctx [grid & [old-grid]] [cell-width cell-height]
+(defn draw-grid! [ctx [grid & [old-grid]] [cell-width cell-height]
                  & {:keys [redraw?]}]
   (js/Graphics.drawGrid ctx 
                         (clj->js grid) 
@@ -122,7 +122,7 @@
   (reify
     om/IDidMount
     (did-mount [this]
-        (draw-grid (.getContext (om/get-node owner) "2d") [grid] [cell-width cell-height]))
+        (draw-grid! (.getContext (om/get-node owner) "2d") [grid] [cell-width cell-height]))
     om/IRender
     (render [this]
       (html [:canvas {:width (* (count (first grid)) cell-width)
@@ -137,7 +137,7 @@
     (did-update [this [prev-grid prev-zoom _] prev-state]
       (let [same-zoom? (= prev-zoom zoom)]
         (when-not (and (= prev-grid grid) same-zoom?)
-          (draw-grid (.getContext (om/get-node owner) "2d")
+          (draw-grid! (.getContext (om/get-node owner) "2d")
                      [grid prev-grid] [cell-width cell-height]
                      :redraw? (not same-zoom?)))))))
 
@@ -218,98 +218,46 @@
                       & [{:keys [cell-width cell-height]
                           :or [cell-width 10 cell-height 10]}]]
                      owner props]
-  (print (pre-render-map (slice grid [0 4] [0 4]) :chunk-size 3))
   (let [{:keys [chunk-size chunk-count
                 viewport-height viewport-width] :as props}
         ; Set defaults not with destructuring becase :as and :or don't work well together.
         (merge {:chunk-size 9 :chunk-count 5
-                :viewport-width 200 :viewport-height 200} props)
-        chunk-width (* chunk-size cell-width)
-        chunk-height (* chunk-size cell-height)]
+                :viewport-width 200 :viewport-height 200} props)]
     (reify
       ; Initial the grid around the center position given by
       ; surrounded the center with chunks.
       om/IInitState
       (init-state [this] 
-        ; Determine chunk count on either side of center
-        (let [chunks-per (/ (- chunk-count 1) 2)
-              rows (range (- row (* chunks-per chunk-size)) 
-                          (+ 1 row (* chunks-per chunk-size)) chunk-size)
-              cols (range (- col (* chunks-per chunk-size))
-                          (+ 1 col (* chunks-per chunk-size)) chunk-size)]
-          {:chunks 
-           (vectorify
-             (for [row rows]
-               (for [col cols]
-                 (new-chunk grid [row col] chunk-size))))
-           :bound {:left (- col chunk-size)
-                   :right (+ col chunk-size)
-                   :top (- row chunk-size)
-                   :bottom (+ row chunk-size)}
-           ; Shift the base by the chunks to the left and right.
-           ; Will change as we add and remove chunks.
-           ;
-           ; Row and Col shifts are not included because they will be used later to center.
-           ; This is to set up the correct frame of refernce.
-           :base-shift {:top (- row) 
-                        :left (- col)} }))
-      ; Adjust scroll position after mount to center 
-      om/IWillReceiveProps
-      (will-receive-props [this [_ [next-row next-col]]]
-        (let [state (om/get-state owner)
-              {:keys [left right top bottom]} (state :bound)]
-          ; Check to see if the viewport has moved out of the bounds covered
-          ; by the currently rendered chunks.
-          (om/update-state! owner
-            #(cond-> %
-               (< next-col left)
-               (add-side grid :left chunk-size)
-               (> next-col right)
-               (add-side grid :right chunk-size)
-               (< next-row top)
-               (add-side grid :top chunk-size)
-               (> next-row bottom)
-               (add-side grid :bottom chunk-size)))))
+        {:base-shift {:top (- row) 
+                      :left (- col)}
+         :map-width (count (first grid))
+         :map-height (count grid)
+         :pre-render (let [ctx (.getContext (create-element! "canvas") "2d")]
+                     (draw-grid! ctx [grid] [cell-width cell-height])
+                     ctx)})
+
       om/IDidMount
       (did-mount [this]
-        (let [base-shift (:base-shift (om/get-state owner))
-              canvas-height (* chunk-count chunk-size cell-height)
-              canvas-width (* chunk-count chunk-size cell-width)]
-          (doto (om/get-node owner) 
-            (aset "scrollTop" (+ (* cell-height (+ row (:top base-shift)))
-                                 (/ (- canvas-height viewport-height) 2)))
- 
-            (aset "scrollLeft" (+ (* cell-width (+ col (:left base-shift)))
-                                  (/ (- canvas-width viewport-width) 2)
-)))))
+        (let [{:keys [pre-render map-width map-height]} (om/get-state owner)
+              x (mod (- row (/ viewport-width 2 cell-width)) map-width)
+              y (mod (- col (/ viewport-height 2 cell-height)) map-height)
+              imageData (.getImageData pre-render x y 
+                                       200
+                                       200)]
+          (js/console.log (.getImageData pre-render 200 200 1 1))
+          (js/console.log x y )
+          (.putImageData (.getContext (om/get-node owner "draw") "2d")
+                         imageData 0 0)))
       om/IDidUpdate
-      (did-update [this _ _]
-        (let [base-shift (:base-shift (om/get-state owner))
-              canvas-height (* chunk-count chunk-size cell-height)
-              canvas-width (* chunk-count chunk-size cell-width)]
-          (doto (om/get-node owner) 
-            (aset "scrollTop" (+ (* cell-height (+ row (:top base-shift)))
-                                 (/ (- canvas-height viewport-height) 2)))
- 
-            (aset "scrollLeft" (+ (* cell-width (+ col (:left base-shift)))
-                                  (/ (- canvas-width viewport-width) 2)
-)))))
+      (did-update [this _ _] true)
       om/IRenderState
       (render-state [this {:keys [base-shift map-width map-height chunks]}]
         (html [:div {:id "map" 
                      :style {:width viewport-width 
                              :height viewport-width
                              :overflow "scroll"}}
-               (flatten (for [[row-of-chunks row-num] (map list chunks (range))]
-                 (for [[chunk col-num] (map list row-of-chunks (range))]
-                    (om/build grid-component 
-                              [(slice-around grid 
-                                             (chunk :center) 
-                                             (chunk :size))
-                               [cell-width cell-height] 
-                               [(* col-num chunk-width)
-                                (* row-num chunk-height)] 
-                               [chunk-width chunk-height]]
-                              {:opts props :react-key (:center chunk)}))))])))))
+               [:canvas {:ref "draw"
+                         :width viewport-width
+                         :height viewport-height}]])))))
 
               

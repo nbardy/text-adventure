@@ -5,6 +5,7 @@
 var Graphics = {};
 
 /**
+        iprint [row-num col-num
  * @param {Object} ctx
  * @param {string} text
  * @param {number} x
