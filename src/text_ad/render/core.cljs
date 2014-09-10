@@ -16,6 +16,6 @@
          (when (get app-state :inventory) 
            (om/build inventory/view (app-state :inventory)))]]
        [:div#action-page (om/build action/view app-state)]
-       [:div#map-page (om/build map-view app-state)]
+       [:div#map-page (om/build map-view state)]
        (when-not (empty? (get-in app-state [:messages]))
          [:div#message-page (om/build messages/view app-state)])])))
