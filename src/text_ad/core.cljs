@@ -3,9 +3,7 @@
   (:require [text-ad.util :refer [create-element! current-time$]]
             [text-ad.render.core :as render]
             [text-ad.map :as map]
-            [text-ad.game :refer [advance]]
             [text-ad.actions :as actions]
-            [text-ad.messages :as messages]
             [om.core :as om :include-macros true]
             [figwheel.client :as fw]))
 
@@ -18,9 +16,9 @@
 
 (map/set-seed! seed)
 (defonce init-state (atom {:map (map/create) 
-                           :row 11 :col 11
+                           :row 150 :col 150
                            :messages []
-                           :zoom 20}))
+                           :zoom 1}))
 
 (do-in 2000
   (swap! init-state update-in [:messages] conj "Confused, you can't seem to remember much of anything."))

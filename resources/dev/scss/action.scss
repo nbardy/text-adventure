@@ -3,10 +3,9 @@ $button-padding: 5px;
   .action-button {
     text-align: center;
     color: black;
-    background-color: teal;
+    .polymer-button {
+      background-color: teal;
+    }
     font-weight: bold;
-    width: 100%;
-    margin-bottom: 0.5em;
-    padding: $button-padding;
   }
 }

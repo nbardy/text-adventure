@@ -4909,19 +4909,23 @@ var ReactCSSTransitionGroupChild = React.createClass({
     var activeClassName = className + '-active';
     var noEventTimeout = null;
 
-    var endListener = function() {
+    var endListener = function(e) {
       if ("production" !== "development") {
         clearTimeout(noEventTimeout);
       }
+      console.log("target", e.target)
+      console.log("node", node)
+      if(e.target == node) {
 
-      CSSCore.removeClass(node, className);
-      CSSCore.removeClass(node, activeClassName);
+        CSSCore.removeClass(node, className);
+        CSSCore.removeClass(node, activeClassName);
 
-      ReactTransitionEvents.removeEndEventListener(node, endListener);
+        ReactTransitionEvents.removeEndEventListener(node, endListener);
 
-      // Usually this optional callback is used for informing an owner of
-      // a leave animation and telling it to remove the child.
-      finishCallback && finishCallback();
+        // Usually this optional callback is used for informing an owner of
+        // a leave animation and telling it to remove the child.
+        finishCallback && finishCallback();
+      }
     };
 
     ReactTransitionEvents.addEndEventListener(node, endListener);

@@ -6,8 +6,13 @@ $message-height: 20px;
 
 .message {
   overflow: hidden;
+  display: -webkit-flex;
+  display: -moz-flex;
+  display: -ms-flex;
   display: flex;
-  .message-content { align-self: flex-end;}
+  .message-content { 
+    align-self: flex-end;
+  }
 }
 .slide-down-enter {
   max-height: 0;

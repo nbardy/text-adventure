@@ -1,6 +1,8 @@
 #stats {
-  position: absolute;
-  top: 20px;
+  border: 1px solid black;
+  margin: auto;
+  height: 100px;
+  margin-bottom: 10px;
 }
 
 #title {
@@ -10,5 +12,5 @@
 
 #inventory {
   border: 1px solid black;
-  height: 300px;
+  height: 200px;
 }

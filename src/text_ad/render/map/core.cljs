@@ -5,6 +5,8 @@
             [clojure.string :refer [join]]
             [sablono.core :refer-macros [html]]))
 
+(defprotocol Drawable (draw [this ]))
+
 (defn trans [cell]
   (let [cell (if (keyword? cell) cell (keyword cell))]
     ({:grass "."
@@ -13,10 +15,12 @@
       :river "~"
       :hills "^"
       :plains ","
+      :forest "*"
       :water-temple "#"} cell)))
 
 (defn trans-color ^:export [cell] 
   (let [ch (trans cell)]
+    (if-not ch (do (print ch) (print cell)))
     (str "rgb(" 
          (-> ch (.charCodeAt 0) (* 75684) (mod 255)) ","
          (-> ch (.charCodeAt 0) (* 94231) (mod 255)) ","
@@ -63,37 +67,14 @@
   (om/component
     (html [:div
            (om/build map-component 
-                     [(assoc-in (state :map) 
-                                (map/wrap [(state :row) (state :col)] 
-                                          (state :map)) 
-                                :person)
+                     [(state :map)
                       [(state :row) (state :col)] 
-                      {:cell-height (state :zoom) 
+                      {:is-rendered? (state :is-rendered?)
+                       :cell-height (state :zoom) 
                        :cell-width (state :zoom)}])
            (om/build +and-button state {:opts {:k :zoom}})
            (for [k [:row :col]]
              (om/build +and-button state {:opts {:k k}})) ])))
-
-; TODO: Rewrite with a macro to use js for loops
-(defn draw-grid! [ctx [grid & [old-grid]] [cell-width cell-height]
-                 & {:keys [redraw?]}]
-  (doseq [row-num (range (count (first grid)))]
-    (doseq [col-num (range (count grid))]
-      ; Check last draw cell if available and not forcing redraw
-      (when (or redraw?
-                (not (= (get-in old-grid [row-num col-num]) 
-                        (get-in grid [row-num col-num]))))
-        (aset ctx "fillStyle" (trans-color (get-in grid [row-num col-num])))
-        ;(.fillText ctx  
-                   ;(trans cell)
-                   ;(* col-num cell-width) 
-                   ;(* row-num cell-height))
-        (.fillRect ctx  
-                   (* col-num cell-width) 
-                   (* row-num cell-height)
-                   cell-width 
-                   cell-height)
-        (aset ctx "fillStyle" "white")))))
 
 ; Override with js implementation
 (defn draw-grid! [ctx [grid & [old-grid]] [cell-width cell-height]
@@ -215,8 +196,8 @@
 
 ;TODO: updates bounds on chunk-count
 (defn map-component [[grid [row col] 
-                      & [{:keys [cell-width cell-height]
-                          :or [cell-width 10 cell-height 10]}]]
+                      & [{:keys [cell-width cell-height is-rendered?]
+                          :or [cell-width 10 cell-height 10 is-rendered? false]}]]
                      owner props]
   (let [{:keys [chunk-size chunk-count
                 viewport-height viewport-width] :as props}
@@ -226,38 +207,54 @@
     (reify
       ; Initial the grid around the center position given by
       ; surrounded the center with chunks.
+      Drawable
+      (draw [this]
+        (let [{:keys [pre-render map-width map-height]} (om/get-state owner)
+              row (mod row map-height)
+              col (mod col map-width)
+              viewable-rows (/ viewport-height cell-height)
+              viewable-cols (/ viewport-width cell-width)
+              x (- col (/ viewable-cols 2))
+              y (- row (/ viewable-rows 2))
+              ctx (.getContext (om/get-node owner "draw") "2d")
+              imageData (.getImageData pre-render x y
+                                       viewable-rows viewable-cols)
+              tempCanvas (create-element! "canvas")]
+          (.putImageData (.getContext tempCanvas "2d") imageData 0 0)
+          (.save ctx)
+          (aset ctx "webkitImageSmoothingEnabled" false)
+          (.scale ctx (/ viewport-width viewable-cols)
+                      (/ viewport-height viewable-rows))
+          (.drawImage ctx tempCanvas 0 0)
+          (.restore ctx)
+          (aset ctx "fillStyle" "green")
+          ))
       om/IInitState
       (init-state [this] 
-        {:base-shift {:top (- row) 
-                      :left (- col)}
-         :map-width (count (first grid))
-         :map-height (count grid)
-         :pre-render (let [ctx (.getContext (create-element! "canvas") "2d")]
-                     (draw-grid! ctx [grid] [cell-width cell-height])
-                     ctx)})
+        (let [map-width (count (first grid))
+              map-height (count grid)]
+          {:base-shift {:top (- row) 
+                        :left (- col)}
+           :map-width map-width
+           :map-height map-height
+           :pre-render 
+           (let [canvas (create-element! "canvas" 
+                          {:width 1000 
+                           :height 1000})
+                 ctx (.getContext canvas "2d")]
+             (draw-grid! ctx [grid] [1 1])
+             ctx)}))
 
       om/IDidMount
-      (did-mount [this]
-        (let [{:keys [pre-render map-width map-height]} (om/get-state owner)
-              x (mod (- row (/ viewport-width 2 cell-width)) map-width)
-              y (mod (- col (/ viewport-height 2 cell-height)) map-height)
-              imageData (.getImageData pre-render x y 
-                                       200
-                                       200)]
-          (js/console.log (.getImageData pre-render 200 200 1 1))
-          (js/console.log x y )
-          (.putImageData (.getContext (om/get-node owner "draw") "2d")
-                         imageData 0 0)))
+      (did-mount [this] (if is-rendered? (draw this)))
       om/IDidUpdate
-      (did-update [this _ _] true)
+      (did-update [this _ _] (if is-rendered? (draw this)))
       om/IRenderState
       (render-state [this {:keys [base-shift map-width map-height chunks]}]
         (html [:div {:id "map" 
                      :style {:width viewport-width 
-                             :height viewport-width
-                             :overflow "scroll"}}
+                             :display "hidden"
+                             :height viewport-width}}
                [:canvas {:ref "draw"
                          :width viewport-width
                          :height viewport-height}]])))))
-
-              
