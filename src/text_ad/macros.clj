@@ -1,5 +1,14 @@
 (ns text-ad.macros)
 
+(defmacro battle-action [args & body]
+  (let [given-fn `(fn ~args ~@body)]
+    `(fn [fight-state# target-key#]
+       (-> fight-state#
+           (~given-fn target-key#)
+           (update-in [:allies] (fn [people#] (filterv #(> (:health %) 0) people#)))
+           (update-in [:enemies] (fn [people#] (filterv #(> (:health %) 0) people#)))))))
+
+
 (defmacro do-in [ms & body]
   "Sets the body of code for execution in the future at least 
   arg: ms seconds from the current time."

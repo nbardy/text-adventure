@@ -14,5 +14,6 @@
   (om/component
     (html 
       [:div 
-       (when (stats :race) 
-         [:div "Race: " (s/capitalize (name (stats :race)))])])))
+        (for [[k v] stats]
+          [:div (str (s/capitalize (name k)) ": " 
+                     (s/capitalize (name v)))])])))

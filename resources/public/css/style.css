@@ -1,8 +1,8 @@
-#info-page, #action-page, #map-page, #message-page {
+#info-page, #action-page, #mode-page, #message-page {
   margin: none;
   position: absolute; }
 
-#info-page, #action-page, #map-page {
+#info-page, #action-page, #mode-page {
   top: 20px; }
 
 #message-page {
@@ -21,7 +21,7 @@
   left: 240px;
   width: 200px; }
 
-#map-page {
+#mode-page {
   left: 460px;
   width: 200px; }
 
@@ -133,6 +133,15 @@
 .slide-down-enter.slide-down-enter-active {
   max-height: 80px; }
 
+.slider {
+  display: flex; }
+  .slider .item {
+    max-width: 0px;
+    overflow: hidden;
+    transition: 0.4s all ease-in; }
+  .slider .item.active {
+    max-width: 200px; }
+
 #dialogue-box {
   position: absolute;
   border-radius: 3px;
@@ -188,5 +197,31 @@
 
 .blur-in-leave.blur-in-leave-active {
   opacity: 0.01; }
+
+.fade-in-enter {
+  opacity: 0;
+  transition: all 2s ease-in; }
+
+.fade-in-enter.fade-in-enter-active {
+  opacity: 1; }
+
+.pop-in-enter {
+  opacity: 0;
+  transition: all 0.2s ease-in;
+  max-height: 0;
+  overflow: hidden; }
+
+.pop-in-enter.pop-in-enter-active {
+  opacity: 1;
+  max-height: 1000px; }
+
+.pop-in-leave {
+  max-height: 400px;
+  transition: all 0.5s ease-in;
+  overflow: hidden;
+  opacity: 1; }
+
+.pop-in-leave.pop-in-leave-active {
+  max-height: 0; }
 
 /*# sourceMappingURL=style.css.map */

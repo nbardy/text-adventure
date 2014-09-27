@@ -4913,8 +4913,6 @@ var ReactCSSTransitionGroupChild = React.createClass({
       if ("production" !== "development") {
         clearTimeout(noEventTimeout);
       }
-      console.log("target", e.target)
-      console.log("node", node)
       if(e.target == node) {
 
         CSSCore.removeClass(node, className);

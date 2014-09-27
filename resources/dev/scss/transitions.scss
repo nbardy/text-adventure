@@ -1,0 +1,33 @@
+
+.fade-in-enter {
+  opacity: 0;
+  transition: all 2s ease-in;
+}
+
+.fade-in-enter.fade-in-enter-active {
+  opacity: 1;
+}
+
+.pop-in-enter {
+  opacity: 0;
+  transition: all 0.2s ease-in;
+  max-height: 0;
+  overflow: hidden;
+}
+
+.pop-in-enter.pop-in-enter-active {
+  opacity: 1;
+  max-height: 1000px;
+}
+
+
+.pop-in-leave {
+  max-height: 400px;
+  transition: all 0.5s ease-in;
+  overflow: hidden;
+  opacity: 1;
+}
+
+.pop-in-leave.pop-in-leave-active {
+  max-height: 0;
+}

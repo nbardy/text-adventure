@@ -72,10 +72,8 @@
                       {:is-rendered? (state :is-rendered?)
                        :cell-height (state :zoom) 
                        :cell-width (state :zoom)}])
-           (om/build +and-button state {:opts {:k :zoom}})
-           (for [k [:row :col]]
-             (om/build +and-button state {:opts {:k k}})) ])))
-
+           (when (get state :zoomable)
+             (om/build +and-button state {:opts {:k :zoom}})) ])))
 ; Override with js implementation
 (defn draw-grid! [ctx [grid & [old-grid]] [cell-width cell-height]
                  & {:keys [redraw?]}]
@@ -227,8 +225,7 @@
                       (/ viewport-height viewable-rows))
           (.drawImage ctx tempCanvas 0 0)
           (.restore ctx)
-          (aset ctx "fillStyle" "green")
-          ))
+          (aset ctx "fillStyle" "green")))
       om/IInitState
       (init-state [this] 
         (let [map-width (count (first grid))
@@ -246,14 +243,15 @@
              ctx)}))
 
       om/IDidMount
-      (did-mount [this] (if is-rendered? (draw this)))
+      (did-mount [this] (draw this))
       om/IDidUpdate
       (did-update [this _ _] (if is-rendered? (draw this)))
       om/IRenderState
       (render-state [this {:keys [base-shift map-width map-height chunks]}]
         (html [:div {:id "map" 
                      :style {:width viewport-width 
-                             :display "hidden"
+                             :transition "all 3s"
+                             :opacity (if is-rendered? 1 0)
                              :height viewport-width}}
                [:canvas {:ref "draw"
                          :width viewport-width

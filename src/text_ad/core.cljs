@@ -1,7 +1,9 @@
 (ns text-ad.core
   (:require-macros [text-ad.macros :refer [do-in]])
-  (:require [text-ad.util :refer [create-element! current-time$]]
+  (:require [text-ad.util :refer [create-element!]]
+            [clojure.browser.repl :as repl]
             [text-ad.render.core :as render]
+            [text-ad.state :as state]
             [text-ad.map :as map]
             [text-ad.actions :as actions]
             [om.core :as om :include-macros true]
@@ -18,8 +20,8 @@
 (defonce init-state (atom {:map (map/create) 
                            :row 150 :col 150
                            :messages []
-                           :zoom 1}))
-
+                           :zoom 2}))
+(repl/connect "http://localhost:9000/repl")
 (do-in 2000
   (swap! init-state update-in [:messages] conj "Confused, you can't seem to remember much of anything."))
 
@@ -29,20 +31,17 @@
 
 (do-in 7000
   (swap! init-state update-in [:messages] conj "Laying on your back, vision is foggy, head throbbing...")
-  (swap! init-state assoc :has-begun true))
+  (swap! init-state assoc :mode :start))
 
 
 (om/root render/app-view init-state {:target js/document.body})
 
 (aset js/document "onkeydown" 
       (fn [e] (case js/window.event.keyCode
-                39 (swap! init-state update-in [:col] inc)
-                37 (swap! init-state update-in [:col] dec)
-                38 (swap! init-state update-in [:row] dec)
-                40 (swap! init-state update-in [:row] inc))))
-
-(defn with-timestamp [state]
-  (assoc state [:timestamp] (current-time$)))
+                39 (swap! init-state state/move :right)
+                40 (swap! init-state state/move :down)
+                38 (swap! init-state state/move :up)
+                37 (swap! init-state state/move :left))))
 
 (fw/watch-and-reload
  :jsload-callback (fn [] 

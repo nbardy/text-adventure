@@ -1,0 +1,11 @@
+.slider {
+  display: flex;
+ .item {
+   max-width: 0px;
+   overflow: hidden;
+   transition: 0.4s all ease-in;
+ }
+ .item.active {
+   max-width: 200px;
+ }
+}

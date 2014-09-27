@@ -1,4 +1,8 @@
-(ns text-ad.util)
+(ns text-ad.util
+  (:refer-clojure :exclude [update-in]))
+
+(defn mode-is? [state v]
+  (= (get state :mode ) v))
 
 (defn n-times ([f x n] (if (> n 0) (recur f (f x) (dec n)) x))
   ([f n] (n-times f (f) (dec n))))

@@ -5,12 +5,12 @@ $message-page-width: 400px;
 $padding: 20px;
 $dialogue-width: 400px;
 
-#info-page, #action-page, #map-page, #message-page {
+#info-page, #action-page, #mode-page, #message-page {
   margin: none;
   position: absolute;
 }
 
-#info-page, #action-page, #map-page {
+#info-page, #action-page, #mode-page {
   top: $padding;
 }
 
@@ -32,7 +32,7 @@ $dialogue-width: 400px;
   width: $action-page-width;
 }
 
-#map-page {
+#mode-page {
   left: $info-page-width + $action-page-width + 3 * $padding;
   width: $action-page-width;
 }
