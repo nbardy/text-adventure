@@ -21,6 +21,7 @@
                            :row 150 :col 150
                            :messages []
                            :zoom 2}))
+
 (repl/connect "http://localhost:9000/repl")
 (do-in 2000
   (swap! init-state update-in [:messages] conj "Confused, you can't seem to remember much of anything."))

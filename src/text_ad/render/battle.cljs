@@ -9,20 +9,25 @@
 
 (declare controls)
 
+(def width 20)
+(def height 20)
+
 (defn highlight-if-target [ctx x y person target]
   (if (= person target)
     (doto ctx
-      (aset "fillStyle" "black")
-      (.fillText "\\/" (+ x 7) (- y 2)))))
+      (aset "fillStyle" "red")
+      (.fillRect (dec x) (dec y) (+ width 2) (+ height 2)))))
 
 (defn draw-row [ctx people x & {:keys [target]}]
   (doseq [[person idx] (map list people (range 1 100))]
     (doto ctx
       (highlight-if-target x (* idx 30) person target)
       (aset "fillStyle" "blue")
-      (.fillRect x (* idx 30) 20 20)
+      (.fillRect x (* idx 30) width height)
       (.fillText (person :health) x (+ (* idx 30) 30)))))
 
+(defn next-target [fight-state]
+  (fn [t] (update-in t [1] #(-> % (inc) (mod (count (:enemies fight-state)))))))
 
 (defn view [{:keys [actions enemies allies] :as fight-state} owner {:keys [on-end]}]
   (reify
@@ -40,16 +45,20 @@
     (did-mount [this] (draw this))
     om/IDidUpdate
     (did-update [this _ _] 
-      (when (<= (reduce #(+ % (%2 :health)) 0 enemies) 0)
-        (om/set-state! owner :victory true)
-        (do-in 200
-          (on-end)))
+      ; Wrap around target if overflowed
+      (if (<= (reduce #(+ % (%2 :health)) 0 enemies) 0)
+        (do
+          (om/set-state! owner :victory true)
+          (do-in 200 (on-end)))
+        (om/update-state! owner :target 
+                          (fn [[t n]] [t (mod n (count (t fight-state)))])))
       (draw this))
     om/IRenderState
     (render-state [_ {:keys [victory target]}]
       (html
         [:div {:style {:position "relative"}}
-         [:canvas {:ref "canvas" :width 200 :height 200}]
+         [:canvas {:ref "canvas" :width 200 :height 200
+                   :on-click #(om/update-state! owner [:target 1] inc)}]
          (for [[k action] actions]
            (om/build polymer-button 
                      {:label (s/capitalize (name k))
