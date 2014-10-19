@@ -5,7 +5,7 @@
             [clojure.string :refer [join]]
             [sablono.core :refer-macros [html]]))
 
-(defprotocol Drawable (draw [this ]))
+(defprotocol Drawable (draw! [this ]))
 
 (defn trans [cell]
   (let [cell (if (keyword? cell) cell (keyword cell))]
@@ -18,26 +18,17 @@
       :forest "*"
       :water-temple "#"} cell)))
 
-(defn trans-color ^:export [cell] 
-  (let [ch (trans cell)]
-    (if-not ch (do (print ch) (print cell)))
-    (str "rgb(" 
-         (-> ch (.charCodeAt 0) (* 75684) (mod 255)) ","
-         (-> ch (.charCodeAt 0) (* 94231) (mod 255)) ","
-         (-> ch (.charCodeAt 0) (* 31349) (mod 255)) ")")))
-
-(defn pre-render-map [map-data & {:keys [chunk-size] :as options}]
-  (let [cache (atom [])
-        row-count (count map-data)
-        col-count (count (first map-data))
-        [row-segments col-segments]
-        (for [v [row-count col-count]] (partition-all chunk-size (range v)))]
-    (for [row-segment row-segments]
-      (for [col-segment col-segments]
-        (for [row row-segment
-              col col-segment]
-          [row col])))))
-
+(defn trans-color [cell]
+  (let [cell (if (keyword? cell) cell (keyword cell))]
+    ({:grass "rgb(110,250,110)"
+      :person "red"
+      :mountain "black"  
+      :river "black"
+      :hills "brown"
+      :plains "tan"
+      :forest "rgb(20,213,40)"
+      :water "blue"
+      :water-temple "#"} cell)))
 
 (defn slice [grid [from-row to-row] [from-col to-col]]
   (vectorify
@@ -74,7 +65,7 @@
                        :cell-width (state :zoom)}])
            (when (get state :zoomable)
              (om/build +and-button state {:opts {:k :zoom}})) ])))
-; Override with js implementation
+
 (defn draw-grid! [ctx [grid & [old-grid]] [cell-width cell-height]
                  & {:keys [redraw?]}]
   (js/Graphics.drawGrid ctx 
@@ -206,7 +197,7 @@
       ; Initial the grid around the center position given by
       ; surrounded the center with chunks.
       Drawable
-      (draw [this]
+      (draw! [this]
         (let [{:keys [pre-render map-width map-height]} (om/get-state owner)
               row (mod row map-height)
               col (mod col map-width)
@@ -243,9 +234,9 @@
              ctx)}))
 
       om/IDidMount
-      (did-mount [this] (draw this))
+      (did-mount [this] (draw! this))
       om/IDidUpdate
-      (did-update [this _ _] (if is-rendered? (draw this)))
+      (did-update [this _ _] (if is-rendered? (draw! this)))
       om/IRenderState
       (render-state [this {:keys [base-shift map-width map-height chunks]}]
         (html [:div {:id "map" 

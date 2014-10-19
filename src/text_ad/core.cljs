@@ -11,28 +11,30 @@
 
 (enable-console-print!)
 
-
 (def rows 40)
 (def cols 40)
 (def seed 3)
 
 (map/set-seed! seed)
+
 (defonce init-state (atom {:map (map/create) 
                            :row 150 :col 150
+                           :allies {:name "Juan"
+                                    :stats {:race :elf}}
                            :messages []
-                           :zoom 2}))
+                           :zoom 1}))
 
-(repl/connect "http://localhost:9000/repl")
-(do-in 2000
-  (swap! init-state update-in [:messages] conj "Confused, you can't seem to remember much of anything."))
+;; (add-watch init-state :printer
+;;            (fn [_ _ old new] (print (dissoc new :map))))
 
-
-(do-in 5000
-  (swap! init-state update-in [:messages] conj "What happened?"))
-
-(do-in 7000
-  (swap! init-state update-in [:messages] conj "Laying on your back, vision is foggy, head throbbing...")
-  (swap! init-state assoc :mode :start))
+(defonce initialized? 
+  (do (repl/connect "http://localhost:9000/repl")
+      (do-in 2000 (swap! init-state update-in [:messages] conj 
+                         "Confused, you can't seem to remember much of anything."))
+      (do-in 5000 (swap! init-state update-in [:messages] conj "What happened?"))
+      (do-in 7000 (swap! init-state update-in [:messages] conj 
+                         "Laying on your back, vision is foggy, head throbbing...")
+             (swap! init-state assoc :mode :start))))
 
 
 (om/root render/app-view init-state {:target js/document.body})
@@ -43,8 +45,16 @@
                 40 (swap! init-state state/move :down)
                 38 (swap! init-state state/move :up)
                 37 (swap! init-state state/move :left))))
+(defn load-extensions [extensions]
+  (doseq [ext extensions] (js/goog.require ext)))
+
+; Load extensions
+(load-extensions ["text_ad.extensions.items"
+                  "text_ad.extensions.race"])
 
 (fw/watch-and-reload
  :jsload-callback (fn [] 
+                    (map/set-seed! seed)
+                    (swap! init-state assoc :map (map/create))
                     (om/root render/app-view init-state {:target js/document.body})
                     (print "refresh")))

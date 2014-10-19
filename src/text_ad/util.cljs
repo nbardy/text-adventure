@@ -7,6 +7,9 @@
 (defn n-times ([f x n] (if (> n 0) (recur f (f x) (dec n)) x))
   ([f n] (n-times f (f) (dec n))))
 
+(defn get-entity [id entities]
+  (some #(if (= (:id %) id) %) entities))
+
 (defn update-in [m ks f & args]
   "Wrap clojure.core.update-in to accept a optional last argument of 
   :default default-value to passed to the update function if key

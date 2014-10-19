@@ -6,7 +6,7 @@
             [sablono.core :refer-macros [html]]))
 
 (defprotocol Resetable (reset [this]))
-(defn polymer-button [{:keys [label on-click]} owner {:keys [class] :as opts}]
+(defn polymer-button [{:keys [disabled label on-click]} owner {:keys [class] :as opts}]
   (reify
     om/IInitState
     (init-state [_]
@@ -21,6 +21,7 @@
       (html
         [:div.polymer-button-wrapper
          [:div {:class (join " " [ "polymer-button" (if clicking? "" "") class])
+                :disabled (boolean disabled)
                 :ref "bound"
                 :on-mouse-down 
                 #(let [eventx (.-pageX %)

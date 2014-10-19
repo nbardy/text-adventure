@@ -1,35 +1,31 @@
 (ns text-ad.vectors)
 
-(def add (partial merge-with +))
+(def add (partial mapv +))
 
 (defn scale [fac vec] 
   "Scales a vector of form {:key val} to {:key fac * val} for all keys."
-  (into {} (map (fn [[k v]] [k (* fac v)]) vec)))
+  (mapv #(* fac %) vec))
 
 (defn sub [vec1 vec2] (add vec1 (scale -1 vec2)))
 
 (defn mag [vec]
   "Returns the magnitude of a vector"
-  (js/Math.sqrt (reduce (fn [m [k v]] (+ m (* v v))) 0 vec)))
+  (js/Math.sqrt (reduce (fn [m v] (+ m (* v v))) 0 vec)))
 
 (defn dist [vec1 vec2]
   (mag (sub vec1 vec2)))
 
 (defn unit [vec]
   "Returns the unit-vector of the given vector."
-  (if (-> vec vals first (= 0))
+  (if (-> vec first (= 0))
     vec
     (scale (/ (mag vec)) vec)))
 
-(defn orthogonal [vec]
-  "Returns a vector orthogonal to the current.
+(defn orthogonal [[v1 v2]]
+  "Returns all vectors orthogonal to the current.
   NOTE: Currently only works on two dimensional vectors."
-  (if (-> vec count (= 2))
-    (let [[k1 k2] (keys vec)
-          [v1 v2] (vals vec)]
-      [{k1 (- v2) k2 v1}
-       {k1 v2 k2 (- v1)}])
-    (throw (js/Error. "Orthogonal only accepts vectors of dimension 2."))))
+  [[(- v2) v1]
+   [v2 (- v1)]])
   
 (def epsilon 0.000001)
 (defmulti =? 

@@ -14,5 +14,9 @@
        [:.item {:class (if (mode-is? app-state :walking) "active")}
         (om/build map-view (assoc app-state :is-rendered? true))]
        [:.item {:class (if (mode-is? app-state :fighting) "active")}
-        (om/build battle/view (app-state :fight)
-                  {:opts {:on-end #(set-mode! app-state :walking)}})]])))
+        (case (app-state :fight)
+          :victory [:.h1 "Victory"]
+          :loss [:.h1 "Loss"]
+          (when (app-state :fight)
+            (om/build battle/view (app-state :fight)
+                    {:opts {:on-end #(set-mode! app-state :walking)}})))]])))
