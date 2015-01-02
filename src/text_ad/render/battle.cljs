@@ -70,8 +70,7 @@
     (.fillRect x y width height)))
 
 (defn draw-health! [ctx person x y ]
-  (let [percent (/ (:health person) (:max-health person))]
-    (js/console.log percent)
+  (let [percent (max (/ (:health person) (:max-health person)) 0)]
     (doto ctx
       (aset "fillStyle" health-color)
       (.fillRect x y (* percent width) 6))))
@@ -95,7 +94,7 @@
         enemies (filter alive? enemies)
         allies (filter alive? allies)
         perform-action! 
-        (fn [active action]
+        (fn [active {:keys [effect]}]
           (let [{:keys [target animating t] :as st} 
                 (om/get-state owner)
                 res-chan (chan)]
@@ -105,7 +104,7 @@
                            :animation-start-t t}))
               (do-in animation-length 
                      (om/set-state! owner :animating false)
-                     (put! res-chan (om/transact! fight-state #(action % target active)))
+                     (put! res-chan (om/transact! fight-state #(effect % target active)))
                      (when-not (result @fight-state)
                        (om/transact! fight-state next-turn))))
             res-chan))]
@@ -156,7 +155,7 @@
                   ; Wait to give the impression the computer is deciding
                   (<! (timeout enemy-wait-time))
                   ; Perform the random action
-                  (<! (perform-action! active chosen))))
+                  (<! (perform-action! active @chosen))))
               ; If human controlled set target to enemies
               (om/set-state! owner :target (cleanup-target [:enemies 0] fight-state))))))
       om/IRenderState
@@ -174,4 +173,4 @@
                  (om/build polymer-button 
                            {:label (s/capitalize (name k))
                             :disabled disabled
-                            :on-click #(perform-action! @active action)}))))])))))
+                            :on-click #(perform-action! @active @action)}))))])))))

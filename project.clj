@@ -1,11 +1,12 @@
 (defproject text-ad "0.1.0-SNAPSHOT"
- g:description "FIXME: write this!"
+  :description "FIXME: write this!"
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [org.clojure/clojurescript "0.0-2277"]
                  [org.clojure/google-closure-library "0.0-20130212-95c19e7f0f5f"]
+                 [garden "1.2.5"]
                  [figwheel "0.1.3-SNAPSHOT"]
                  [org.clojure/core.async "0.1.278.0-76b25b-alpha"]
                  [sablono "0.2.19"]
@@ -14,8 +15,7 @@
   :plugins [[lein-cljsbuild "1.0.3"]
             [lein-figwheel "0.1.3-SNAPSHOT"]]
 
-  :cljsbuild {
-              :builds [{:source-paths ["src"]
+  :cljsbuild {:builds [{:source-paths ["src" "../om-devtools"]
                         :compiler {:output-to "resources/public/js/compiled/text_ad.js"
                                    :output-dir "resources/public/js/compiled/out"
                                    :source-map true

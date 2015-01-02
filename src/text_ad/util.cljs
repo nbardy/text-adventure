@@ -23,6 +23,13 @@
         args (if has-default (drop-last 2 args) args)]
     (apply clojure.core/update-in m ks f args)))
 
+(defn take-last-while [pred coll]
+  (lazy-seq
+    (when-let [s (seq coll)]
+      (when (pred (last s))
+        (conj  (take-last-while pred (drop-last coll)) (last s))))))
+
+
 (defn in-between? [value [p1 p2]]
   (or (< p1 value p2) 
       (> p1 value p2)))

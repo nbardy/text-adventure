@@ -2,7 +2,8 @@
   (:refer-clojure :exclude [update-in])
   (:require-macros [text-ad.macros :refer [defaction defdialogue]])
   (:require [text-ad.util :refer [update-in]]
-            [text-ad.state :refer [nearby-items set-race]]))
+            [text-ad.unit :refer [set-race]]
+            [text-ad.state :refer [nearby-items]]))
 
 (def blind-num 5)
 (defn update-eye-rub [state]

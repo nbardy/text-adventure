@@ -2,6 +2,7 @@
   (:require [om.core :as om :include-macros true]
             [text-ad.map :refer [vectorify] :as map]
             [text-ad.util :refer [create-element! in-between?]]
+            [text-ad.render.components :refer [+and-button]]
             [clojure.string :refer [join]]
             [sablono.core :refer-macros [html]]))
 
@@ -41,30 +42,36 @@
 (defn +and- [x y] [(- x y) (+ x y)])
 (declare map-component)
 
-(defn +and-button [state owner {:keys [k]}]
-  (om/component
-    (html [:div
-           [:span (str (name k) ": ")]
-           [:span (state k)]
-           [:button {:onMouseDown 
-                     (fn [& update] 
-                       (om/transact! state k inc))} "+"]
-           [:button {:onMouseDown 
-                     (fn [& update] 
-                       (om/transact! state k dec))} "-"]])))
-
+(def viewport-height 200)
+(def viewport-width 200)
 
 (defn map-view [state owner]
-  (om/component
-    (html [:div
-           (om/build map-component 
-                     [(state :map)
-                      [(state :row) (state :col)] 
-                      {:is-rendered? (state :is-rendered?)
-                       :cell-height (state :zoom) 
-                       :cell-width (state :zoom)}])
-           (when (get state :zoomable)
-             (om/build +and-button state {:opts {:k :zoom}})) ])))
+  (reify
+    om/IDidMount
+    (did-mount [this]
+      (let [[row col] ((juxt :row :col) state)
+            ctx (.getContext (om/get-node owner "draw-unit") "2d")
+            [mid-h mid-w] [(/ viewport-width 2) (/ viewport-height 2)]]
+        (doto ctx
+          (.fillRect (- mid-h (mod mid-h (:zoom state)))
+                     (- mid-w (mod mid-w (:zoom state)))
+                     (:zoom state) (:zoom state)))))
+    om/IRender
+    (render [this]
+      (html [:div#map-view
+             [:canvas {:ref "draw-unit"
+                       :width viewport-width
+                       :height viewport-height}]
+              (om/build map-component 
+                        [(state :map)
+                         [(state :row) (state :col)] 
+                         {:is-rendered? (state :is-rendered?)
+                          :viewport-height viewport-height
+                          :viewport-width viewport-width
+                          :cell-height (state :zoom) 
+                          :cell-width (state :zoom)}])
+              (when (get state :zoomable)
+                (om/build +and-button state {:opts {:k :zoom}}))]))))
 
 (defn draw-grid! [ctx [grid & [old-grid]] [cell-width cell-height]
                  & {:keys [redraw?]}]
@@ -185,14 +192,11 @@
 
 ;TODO: updates bounds on chunk-count
 (defn map-component [[grid [row col] 
-                      & [{:keys [cell-width cell-height is-rendered?]
+                      & [{:keys [viewport-height viewport-width
+                                 cell-width cell-height is-rendered?]
                           :or [cell-width 10 cell-height 10 is-rendered? false]}]]
                      owner props]
-  (let [{:keys [chunk-size chunk-count
-                viewport-height viewport-width] :as props}
         ; Set defaults not with destructuring becase :as and :or don't work well together.
-        (merge {:chunk-size 9 :chunk-count 5
-                :viewport-width 200 :viewport-height 200} props)]
     (reify
       ; Initial the grid around the center position given by
       ; surrounded the center with chunks.
@@ -205,7 +209,7 @@
               viewable-cols (/ viewport-width cell-width)
               x (- col (/ viewable-cols 2))
               y (- row (/ viewable-rows 2))
-              ctx (.getContext (om/get-node owner "draw") "2d")
+              ctx (.getContext (om/get-node owner "draw1") "2d")
               imageData (.getImageData pre-render x y
                                        viewable-rows viewable-cols)
               tempCanvas (create-element! "canvas")]
@@ -227,12 +231,11 @@
            :map-height map-height
            :pre-render 
            (let [canvas (create-element! "canvas" 
-                          {:width 1000 
-                           :height 1000})
+                          {:width map-width 
+                           :height map-height})
                  ctx (.getContext canvas "2d")]
              (draw-grid! ctx [grid] [1 1])
              ctx)}))
-
       om/IDidMount
       (did-mount [this] (draw! this))
       om/IDidUpdate
@@ -244,6 +247,6 @@
                              :transition "all 3s"
                              :opacity (if is-rendered? 1 0)
                              :height viewport-width}}
-               [:canvas {:ref "draw"
+               [:canvas {:ref "draw1"
                          :width viewport-width
-                         :height viewport-height}]])))))
+                         :height viewport-height}]]))))

@@ -42,3 +42,15 @@
             :style {:width (* r 2) :height (* r 2)
                     :margin-left (- r ) :margin-top (- r)
                     :left x :top y}}]]]))))
+
+(defn +and-button [state owner {:keys [k]}]
+  (om/component
+    (html [:div
+           [:span (str (name k) ": ")]
+           [:span (state k)]
+           [:button {:onMouseDown 
+                     (fn [& update] 
+                       (om/transact! state k inc))} "+"]
+           [:button {:onMouseDown 
+                     (fn [& update] 
+                       (om/transact! state k dec))} "-"]])))

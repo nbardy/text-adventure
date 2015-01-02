@@ -42,6 +42,16 @@
   position: absolute;
   -webkit-transform: translate3d(0, 0, 0); }
 
+#map-view {
+  position: relative; }
+  #map-view canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 0; }
+  #map-view > canvas {
+    z-index: 20; }
+
 #stats {
   border: 1px solid black;
   margin: auto;
